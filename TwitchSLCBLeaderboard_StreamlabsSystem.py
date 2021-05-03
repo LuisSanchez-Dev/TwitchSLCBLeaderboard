@@ -1,0 +1,1 @@
+import os,sys,clr;sys.path.append(os.path.dirname(os.path.realpath(__file__)));clr.AddReferenceToFileAndPath('TwitchSLCBLeaderboard.dll');from TwitchSLCBLeaderboard_Main import *;import TwitchSLCBLeaderboard_Main;on_init.append(lambda: set_parent(Parent))

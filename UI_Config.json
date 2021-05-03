@@ -1,0 +1,12 @@
+{
+    "output_file": "config.json",
+
+    "open_contact_me": {
+        "type": "button",
+        "label": "Want a custom script or twitch extension?\nCONTACT THE DEV",
+        "tooltip": "",
+        "function": "open_contact_me",
+        "wsevent": "",
+        "group": ""
+    }
+}
