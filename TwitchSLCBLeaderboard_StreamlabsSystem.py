@@ -2,15 +2,13 @@
 
 # -*- coding: utf-8 -*-
 import os
+import re
 import sys
 import clr
 import time
 import json
 import codecs
 import System
-
-sys.path.append(os.path.dirname(__file__))
-from TwitchSLCBLeaderboard_Database import Data
 
 # Import the chatbot
 clr.AddReference([asm for asm in System.AppDomain.CurrentDomain.GetAssemblies() if "AnkhBotR2" in str(asm)][0])
@@ -43,7 +41,7 @@ def Tick():
     global last_check
     if Parent.GetStreamingService() != "Twitch":
         return
-    
+
     elapsed_time = time.time() - last_check
     if elapsed_time >= 30:
         if has_leaderboard_updated():
@@ -54,26 +52,28 @@ def Unload():
     push_new_leaderboard()
 
 def get_leaderboard():
-    data = Data()
-    users = []
+    parsed = BuiltInParse("$toppoints(5)", "", "").replace(",", "")
+    # #1 tecno_diana (10000569) - #2 BitsBearer (3000) - #3 dumb_ted (500) - #4 patriciaefackler (430) - #5 bongtheripper (112)
+    pattern = r'#\d\s(\S+)\s\((\d+)\)'
+    match = re.findall(pattern, parsed)
+    if match:
+        users = []
+        for row in match:
+            users.append({
+                "name": row[0],
+                "points": float(row[1])
+            })
+        return {
+            "currency": Parent.GetCurrencyName(),
+            "users": users
+        }
+    return []
 
-    db_currencies = [c for c in list(data.ChatBotDatabase.Currencies).GetEnumerator()]
-    db_users = [u for u in list(data.ChatBotDatabase.Users).GetEnumerator()]
-    
-    for c in db_currencies:
-        for u in db_users:
-            if c.UserId == u.UserId:
-                users.append({
-                    "points": float(c.Points),
-                    "name": u.Name
-                })
-                break
-    users = sorted(users, key=lambda u: u["points"], reverse=True)
-
-    return {
-        "currency": Parent.GetCurrencyName(),
-        "users": users[:5]
-    }
+def BuiltInParse(msg, userId, userName, count = 0):
+    asm = [asm for asm in System.AppDomain.CurrentDomain.GetAssemblies() if "AnkhBotR2" in str(asm)][0]
+    ParameterExtension = asm.GetType("AnkhBotR2.Helpers.Extensions.ParameterExtension")
+    ReplaceParameters = ParameterExtension.GetMethods()[1]
+    return ReplaceParameters.Invoke(msg, System.Array[System.Object]([msg, userId, userName, "", count]))
 
 def has_leaderboard_updated():
     global CACHE_FILE
@@ -103,7 +103,9 @@ def push_new_leaderboard():
     headers = {
         "Authorization": get_oauth()
     }
-    response = json.loads(Parent.PostRequest("https://extensions.luissanchezdev.com/slcb/leaderboard", headers, leaderboard, True))
+    request_response = Parent.PostRequest("https://extensions.luissanchezdev.com/slcb/leaderboard", headers, leaderboard, True)
+    Parent.SendStreamMessage(request_response)
+    response = json.loads(request_response)
 
     if response["status"] == 200:
         try:
