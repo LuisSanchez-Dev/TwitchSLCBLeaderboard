@@ -18,7 +18,7 @@ import AnkhBotR2
 ScriptName = "Twitch SLCB Leaderboard"
 Description = "Show the top 5 viewers with the most chatbot currency"
 Creator = "LuisSanchezDev"
-Version = "1.0.0"
+Version = "1.0.1"
 Website = "https://luissanchezdev.com/"
 
 # Define Global Variables
@@ -104,7 +104,6 @@ def push_new_leaderboard():
         "Authorization": get_oauth()
     }
     request_response = Parent.PostRequest("https://extensions.luissanchezdev.com/slcb/leaderboard", headers, leaderboard, True)
-    Parent.SendStreamMessage(request_response)
     response = json.loads(request_response)
 
     if response["status"] == 200:
